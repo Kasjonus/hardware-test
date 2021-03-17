@@ -21,4 +21,4 @@ Software for hardware testing.
     - #### linux
             npm run build-lin
     - #### windows (not working propertly)
-            npm run build-lin
+            npm run build-win

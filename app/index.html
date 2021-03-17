@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self';" />
+    <title>Hardware test</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/font-awesome.min.css" />
+  </head>
+
+  <body>
+    <svg
+      preserveAspectRatio="none"
+      id="visualizer"
+      version="1.1"
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+    >
+      <defs>
+        <mask id="mask">
+          <g id="maskGroup"></g>
+        </mask>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color: #db6247; stop-opacity: 1" />
+          <stop offset="40%" style="stop-color: #f6e5d1; stop-opacity: 1" />
+          <stop offset="60%" style="stop-color: #5c79c7; stop-opacity: 1" />
+          <stop offset="85%" style="stop-color: #b758c0; stop-opacity: 1" />
+          <stop offset="100%" style="stop-color: #222; stop-opacity: 1" />
+        </linearGradient>
+      </defs>
+      <rect
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        fill="url(#gradient)"
+        mask="url(#mask)"
+      ></rect>
+    </svg>
+
+    <div class="main">
+      <div id="whiteScreen"></div>
+
+      <canvas id="touchScreenArea">
+        Wystąpił problem z załadowaniem testu dotyku.</canvas
+      >
+
+      <div id="keyboardTest">
+        <div class="keybord">
+          <div class="blur"></div>
+          <div class="fade"></div>
+          <div class="content">
+            <div class="keybord-top"></div>
+            <div class="key-block">
+              <div class="key k27"><p>Esc</p></div>
+              <div class="key vh"></div>
+              <div class="key k112"><p>F1</p></div>
+              <div class="key k113"><p>F2</p></div>
+              <div class="key k114"><p>F3</p></div>
+              <div class="key k115"><p>F4</p></div>
+              <div class="key vh half"></div>
+              <div class="key k116"><p>F5</p></div>
+              <div class="key k117"><p>F6</p></div>
+              <div class="key k118"><p>F7</p></div>
+              <div class="key k119"><p>F8</p></div>
+              <div class="key vh half"></div>
+              <div class="key k120"><p>F9</p></div>
+              <div class="key k121"><p>F10</p></div>
+              <div class="key k122"><p>F11</p></div>
+              <div class="key k123"><p>F12</p></div>
+              <div class="key dl brackets k44">
+                <p>Prt<br />Sc</p>
+              </div>
+              <div class="key dl k145">
+                <p>Scr<br />Lk</p>
+              </div>
+              <div class="key dl k19">
+                <p>Pause<br />break</p>
+              </div>
+              <div class="key t16 k36"><p>Home</p></div>
+              <div class="key t16 k35"><p>End</p></div>
+              <div class="key dl k192">
+                <p>~<br />`</p>
+              </div>
+              <div class="key k49"><p>1</p></div>
+              <div class="key k50"><p>2</p></div>
+              <div class="key k51"><p>3</p></div>
+              <div class="key k52"><p>4</p></div>
+              <div class="key k53"><p>5</p></div>
+              <div class="key k54"><p>6</p></div>
+              <div class="key k55"><p>7</p></div>
+              <div class="key k56"><p>8</p></div>
+              <div class="key k57"><p>9</p></div>
+              <div class="key k48"><p>0</p></div>
+              <div class="key dl smin k173 k189">
+                <p>_<br />-</p>
+              </div>
+              <div class="key dl splus k61 k187">
+                <p>+<br />=</p>
+              </div>
+              <div class="key bs k8"><p>⟵</p></div>
+              <div class="key dl brackets k33">
+                <p>Page<br />up</p>
+              </div>
+              <div class="key dl k144">
+                <p>Num<br />Lock</p>
+              </div>
+              <div class="key k111"><p>/</p></div>
+              <div class="key k106"><p>*</p></div>
+              <div class="key dl k109"><p>_</p></div>
+              <div class="key tab k9"><p>Tab</p></div>
+              <div class="key k81"><p>Q</p></div>
+              <div class="key k87"><p>W</p></div>
+              <div class="key k69"><p>E</p></div>
+              <div class="key k82"><p>R</p></div>
+              <div class="key k84"><p>T</p></div>
+              <div class="key k89"><p>Y</p></div>
+              <div class="key k85"><p>U</p></div>
+              <div class="key k73"><p>I</p></div>
+              <div class="key k79"><p>O</p></div>
+              <div class="key k80"><p>P</p></div>
+              <div class="key ds k219">
+                <p>{<br />[</p>
+              </div>
+              <div class="key ds k221">
+                <p>}<br />]</p>
+              </div>
+              <div class="key ds sum k220">
+                <p>|<br />\</p>
+              </div>
+              <div class="key dl brackets k34">
+                <p>Page<br />down</p>
+              </div>
+              <div class="key k103"><p>7</p></div>
+              <div class="key k104"><p>8</p></div>
+              <div class="key k105"><p>9</p></div>
+              <div class="key plus k107"><p>+</p></div>
+              <div class="key caps k20"><p>Caps Lock</p></div>
+              <div class="key k65"><p>A</p></div>
+              <div class="key k83"><p>S</p></div>
+              <div class="key k68"><p>D</p></div>
+              <div class="key k70"><p>F</p></div>
+              <div class="key k71"><p>G</p></div>
+              <div class="key k72"><p>H</p></div>
+              <div class="key k74"><p>J</p></div>
+              <div class="key k75"><p>K</p></div>
+              <div class="key k76"><p>L</p></div>
+              <div class="key ds k59 k186">
+                <p>:<br />;</p>
+              </div>
+              <div class="key ds k222">
+                <p>"<br />'</p>
+              </div>
+              <div class="key enter k13">
+                <p><span></span> ENTER</p>
+              </div>
+              <div class="key brackets k45"><p>ins</p></div>
+              <div class="key k100"><p>4</p></div>
+              <div class="key k101"><p>5</p></div>
+              <div class="key k102"><p>6</p></div>
+              <div class="key shift1 k16"><p>SHIFT</p></div>
+              <div class="key k90"><p>Z</p></div>
+              <div class="key k88"><p>X</p></div>
+              <div class="key k67"><p>C</p></div>
+              <div class="key k86"><p>V</p></div>
+              <div class="key k66"><p>B</p></div>
+              <div class="key k78"><p>N</p></div>
+              <div class="key k77"><p>M</p></div>
+              <div class="key ds k188">
+                <p>&lt;<br />,</p>
+              </div>
+              <div class="key ds k190">
+                <p>&gt;<br />.</p>
+              </div>
+              <div class="key ds k191">
+                <p>?<br />/</p>
+              </div>
+              <div class="key shift2 k16"><p>SHIFT</p></div>
+              <div class="key brackets k46"><p>del</p></div>
+              <div class="key k97"><p>1</p></div>
+              <div class="key k98"><p>2</p></div>
+              <div class="key k99"><p>3</p></div>
+              <div class="key enter2 k13"><p>Enter</p></div>
+              <div class="key ctrl1 k17"><p>CTRL</p></div>
+              <div class="key wndw k91">
+                <p><span></span></p>
+              </div>
+              <div class="key alt k18"><p>ALT</p></div>
+              <div class="key space k32"></div>
+              <div class="key alt k18"><p>ALT</p></div>
+              <div class="key cont k93">
+                <div class="cblock">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+              <div class="key ctrl2 k17"><p>CTRL</p></div>
+              <div class="key arup brackets k38"><p>↑</p></div>
+              <div class="key zero k96"><p>0</p></div>
+              <div class="key k110"><p>.,</p></div>
+              <div class="m-block">
+                <div class="key lclick k0"></div>
+                <div class="key cclick k1"></div>
+                <div class="key rclick k2"></div>
+              </div>
+              <div class="key arleft k37"><p>←</p></div>
+              <div class="key ardown k40"><p>↓</p></div>
+              <div class="key arright k39"><p>→</p></div>
+            </div>
+            <div class="keybord-footer">
+              <hr />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <video autoplay></video>
+
+      <audio controls hidden loop id="stereoTest">
+        <source src="./sound/left-right-stereo-test.mp3" type="audio/mp3" />
+        Wystąpił problem z załadowaniem testowego dźwięku.
+      </audio>
+
+      <h1 class="main-text"></h1>
+
+      <ul id="hardware-info">
+        Trwa ładowanie danych
+      </ul>
+
+      <div class="button-container">
+        <button id="button" class="green-button">
+          <span class="fa fa-play"></span>Stereo test
+        </button>
+        <button class="green-button" id="whiteTestButton">Biały ekran</button>
+        <button class="green-button" id="touchScreenAreaTestButton">
+          Test dotyku
+        </button>
+        <button class="green-button" id="keyboardTestButton">Test klawiatury</button>
+      </div>
+
+      <svg class="barcode"></svg>
+    </div>
+
+    <script src="./js/test/camera.js"></script>
+    <script src="./js/test/audio.js"></script>
+    <script src="./js/test/keyboard.js"></script>
+    <script src="./js/test/whiteScreen.js"></script>
+    <script src="./js/test/touchScreenArea.js"></script>
+  </body>
+</html>

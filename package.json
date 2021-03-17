@@ -1,0 +1,23 @@
+{
+  "name": "hardware-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app/index.js",
+  "dependencies": {
+    "systeminformation": "^5.6.1"
+  },
+  "devDependencies": {
+    "electron": "^12.0.0",
+    "electron-packager": "^15.2.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "startRoot": "electron . --no-sandbox",
+    "build-win": "electron-packager . hardware-test --overwrite --asar --platform=win32 --arch=ia32 --prune=true --out=build --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Hardware test\"",
+    "build-lin": "electron-packager . hardware-test --overwrite --asar --platform=linux --arch=x64 --prune=true --out=build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -20,6 +20,22 @@ window.addEventListener("DOMContentLoaded", () => {
 	let stats = {};
 	let dataCount = 0;
 
+	const getGraphics = (cb) => {
+		require("child_process").exec("lshw -c display | grep product:", function (error, stdout) {
+			let array = [];
+
+			stdout.split("\n").map((item) => {
+				array.push(item.split(":")[1]);
+			});
+
+			if (error !== null) {
+				console.log("exec error: " + error);
+			} else {
+				cb(array);
+			}
+		});
+	};
+
 	const getBatteries = (cb) => {
 		require("child_process").exec("upower -e | grep battery_BAT", function (error, stdout) {
 			let array = [];
@@ -55,6 +71,7 @@ window.addEventListener("DOMContentLoaded", () => {
 				console.log("exec error: " + error);
 			} else {
 				cb({
+					id: batPath,
 					capacity: {
 						perc: object.capacity,
 						text: `${object["energy-full"]} / ${object["energy-full-design"]}`,
@@ -73,9 +90,24 @@ window.addEventListener("DOMContentLoaded", () => {
 			batPathResp.length !== 0 &&
 				getBatteryStats(batPathResp, (batDataResp) => {
 					stats["battery"].push(batDataResp);
-					getReady();
 				});
 		});
+		getReady();
+	});
+
+	getGraphics((graphicsResp) => {
+		let array = [];
+		graphicsResp.forEach((graphResp) => {
+			graphResp && array.push({ model: graphResp });
+		});
+		stats = {
+			...stats,
+			graphics: {
+				...stats.graphics,
+				controllers: array,
+			},
+		};
+		getReady();
 	});
 
 	require("systeminformation")
@@ -84,17 +116,24 @@ window.addEventListener("DOMContentLoaded", () => {
 			diskLayout: "*",
 			mem: "total",
 			memLayout: "*",
-			graphics: "*",
+			graphics: "displays",
 			system: "model, manufacturer, serial",
 		})
 		.then((data) => {
-			stats = { ...stats, ...data };
+			stats = {
+				...stats,
+				...data,
+				graphics: {
+					...stats.graphics,
+					...data.graphics,
+				},
+			};
 			getReady();
 		});
 
 	const getReady = () => {
 		dataCount++;
-		dataCount === 2 && loadStats(stats);
+		dataCount === 3 && loadStats(stats);
 	};
 
 	const loadStats = (data) => {
@@ -211,12 +250,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
 		data.battery.map((BatteryData) => {
 			const Capacity = document.createElement("li");
-			Capacity.innerText = `Żywotność: ${BatteryData.capacity.perc} (${BatteryData.capacity.text})`;
+			Capacity.id = BatteryData.id;
+			const CapacityText = document.createElement("a");
+			CapacityText.innerText = `Żywotność: ${BatteryData.capacity.perc} (${BatteryData.capacity.text})`;
+			Capacity.appendChild(CapacityText);
 
 			const Energy = document.createElement("li");
+			Energy.className = "energy";
 			Energy.innerText = `Poziom naładowania: ${BatteryData.energy.perc} (${BatteryData.energy.wh})`;
 
 			const Voltage = document.createElement("li");
+			Voltage.className = "voltage";
 			Voltage.innerText = `Napięcie: ${BatteryData.voltage} ${BatteryData.state}`;
 
 			const BatteryUl = document.createElement("ul");
@@ -242,10 +286,25 @@ window.addEventListener("DOMContentLoaded", () => {
 			JsBarcode(SerialBarCode, data.system.serial);
 
 			window.setInterval(() => {
-				getBatteryStats((newBatResp) => {
-					changeIfNewValue(Capacity, `Żywotność: ${newBatResp.capacity.perc} (${newBatResp.capacity.text})`);
-					changeIfNewValue(Energy, `Poziom naładowania: ${newBatResp.energy.perc} (${newBatResp.energy.wh})`);
-					changeIfNewValue(Voltage, `Napięcie: ${newBatResp.voltage} ${newBatResp.state}`);
+				getBatteries((batResp) => {
+					batResp.forEach((batPathResp) => {
+						batPathResp.length !== 0 &&
+							getBatteryStats(batPathResp, (newBatResp) => {
+								console.log(newBatResp);
+								changeIfNewValue(
+									document.getElementById(newBatResp.id).querySelector("a"),
+									`Żywotność: ${newBatResp.capacity.perc} (${newBatResp.capacity.text})`
+								);
+								changeIfNewValue(
+									document.getElementById(newBatResp.id).querySelector(".energy"),
+									`Poziom naładowania: ${newBatResp.energy.perc} (${newBatResp.energy.wh})`
+								);
+								changeIfNewValue(
+									document.getElementById(newBatResp.id).querySelector(".voltage"),
+									`Napięcie: ${newBatResp.voltage} ${newBatResp.state}`
+								);
+							});
+					});
 				});
 			}, 100);
 		}

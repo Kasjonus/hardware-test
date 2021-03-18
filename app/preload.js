@@ -1,246 +1,253 @@
 const formatBytes = (bytes, decimals = 0) => {
-  if (bytes === 0) return "0 Bytes";
+	if (bytes === 0) return "0 Bytes";
 
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+	const k = 1024;
+	const dm = decimals < 0 ? 0 : decimals;
+	const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 };
 
 const changeIfNewValue = (el, data) => {
-  el.innerText !== data && (el.innerText = data);
+	el.innerText !== data && (el.innerText = data);
 };
 
 window.addEventListener("DOMContentLoaded", () => {
-  const jsBarcode = require("./js/JsBarcode.all.min.js");
-  const element = document.getElementById("hardware-info");
-  let stats = {};
-  let dataCount = 0;
+	const jsBarcode = require("./js/JsBarcode.all.min.js");
+	const element = document.getElementById("hardware-info");
+	let stats = {};
+	let dataCount = 0;
 
-  const getBatteryStats = (cb) => {
-    require("child_process").exec(
-      "upower -i /org/freedesktop/UPower/devices/battery_BAT0",
-      function (error, stdout) {
-        let object = {};
+	const getBatteries = (cb) => {
+		require("child_process").exec("upower -e | grep battery_BAT", function (error, stdout) {
+			let array = [];
 
-        stdout
-          .replace(/ +/g, "")
-          .split("\n")
-          .map((item) => {
-            const field = item.split(":");
-            object[field[0]] = field[1];
-          });
+			stdout
+				.replace(/ +/g, "")
+				.split("\n")
+				.map((item) => {
+					array.push(item);
+				});
 
-        if (error !== null) {
-          console.log("exec error: " + error);
-        } else {
-          cb({
-            capacity: {
-              perc: object.capacity,
-              text: `${object["energy-full"]} / ${object["energy-full-design"]}`,
-            },
-            voltage: object.voltage,
-            energy: { wh: object.energy, perc: object.percentage},
-            state: object.state === "charging" ? "(Ładowanie)" : "",
-          });
-        }
-      }
-    );
-  };
+			if (error !== null) {
+				console.log("exec error: " + error);
+			} else {
+				cb(array);
+			}
+		});
+	};
 
-  getBatteryStats((batDataResp) => {
-    stats["battery"] = batDataResp;
-    getReady();
-  });
+	const getBatteryStats = (batPath, cb) => {
+		require("child_process").exec(`upower -i ${batPath}`, function (error, stdout) {
+			let object = {};
 
-  require("systeminformation")
-    .get({
-      cpu: "brand",
-      diskLayout: "*",
-      mem: "total",
-      memLayout: "*",
-      graphics: "*",
-      system: "model, manufacturer, serial",
-    })
-    .then((data) => {
-      stats = { ...stats, ...data };
-      getReady();
-    });
+			stdout
+				.replace(/ +/g, "")
+				.split("\n")
+				.map((item) => {
+					const field = item.split(":");
+					object[field[0]] = field[1];
+				});
 
-  const getReady = () => {
-    dataCount++;
-    dataCount === 2 && loadStats(stats);
-  };
+			if (error !== null) {
+				console.log("exec error: " + error);
+			} else {
+				cb({
+					capacity: {
+						perc: object.capacity,
+						text: `${object["energy-full"]} / ${object["energy-full-design"]}`,
+					},
+					voltage: object.voltage,
+					energy: { wh: object.energy, perc: object.percentage },
+					state: object.state === "charging" ? "(Ładowanie)" : "",
+				});
+			}
+		});
+	};
 
-  const loadStats = (data) => {
-    const viewBarcode = (text) => {
-      JsBarcode(SerialBarCode, text.replace(/[^\x00-\x7F]/g, ""));
-    };
+	getBatteries((batResp) => {
+		stats["battery"] = [];
+		batResp.forEach((batPathResp) => {
+			batPathResp.length !== 0 &&
+				getBatteryStats(batPathResp, (batDataResp) => {
+					stats["battery"].push(batDataResp);
+					getReady();
+				});
+		});
+	});
 
-    var SerialBarCode = document.querySelector(".barcode");
+	require("systeminformation")
+		.get({
+			cpu: "brand",
+			diskLayout: "*",
+			mem: "total",
+			memLayout: "*",
+			graphics: "*",
+			system: "model, manufacturer, serial",
+		})
+		.then((data) => {
+			stats = { ...stats, ...data };
+			getReady();
+		});
 
-    const Serial = document.createElement("li");
-    Serial.innerText = "Serial: " + data.system.serial;
-    Serial.onclick = () => viewBarcode(data.system.serial);
-    Serial.className = "click";
+	const getReady = () => {
+		dataCount++;
+		dataCount === 2 && loadStats(stats);
+	};
 
-    const Model = document.createElement("li");
-    Model.innerText = "Model: " + data.system.model;
-    Model.onclick = () => viewBarcode(data.system.model);
-    Model.className = "click";
+	const loadStats = (data) => {
+		const viewBarcode = (text) => {
+			JsBarcode(SerialBarCode, text.replace(/[^\x00-\x7F]/g, ""));
+		};
 
-    const CPU = document.createElement("li");
-    CPU.innerText = "Procesor: " + data.cpu.brand;
-    CPU.onclick = () => viewBarcode(data.cpu.brand);
-    CPU.className = "click";
+		var SerialBarCode = document.querySelector(".barcode");
 
-    const Disks = document.createElement("li");
-    Disks.innerText = "Dysk" + (data.diskLayout.length === 1 ? ": " : "i: ");
-    data.diskLayout.map((diskData) => {
-      const Disk = document.createElement("ul");
-      const DiskText = document.createElement("li");
-      DiskText.innerText = "PN: " + diskData.serialNum;
-      DiskText.onclick = () => viewBarcode(diskData.serialNum);
-      DiskText.className = "click";
-      Disk.appendChild(DiskText);
+		const Serial = document.createElement("li");
+		Serial.innerText = "Serial: " + data.system.serial;
+		Serial.onclick = () => viewBarcode(data.system.serial);
+		Serial.className = "click";
 
-      const serial = document.createElement("ul");
-      serial.innerText = "Nazwa dysku: " + diskData.name;
-      serial.onclick = () => viewBarcode(diskData.name);
-      serial.className = "click";
-      const sizeType = document.createElement("ul");
-      sizeType.innerText =
-        "Pojemność: " +
-        Math.round(diskData.size / 1000000000) +
-        " " +
-        diskData.type;
-      sizeType.onclick = () =>
-        viewBarcode(
-          Math.round(diskData.size / 1000000000) + " " + diskData.type
-        );
-      sizeType.className = "click";
+		const Model = document.createElement("li");
+		Model.innerText = "Model: " + data.system.model;
+		Model.onclick = () => viewBarcode(data.system.model);
+		Model.className = "click";
 
-      const smartStatus = document.createElement("ul");
-      smartStatus.innerText = "SMART status: " + diskData.smartStatus;
+		const CPU = document.createElement("li");
+		CPU.innerText = "Procesor: " + data.cpu.brand;
+		CPU.onclick = () => viewBarcode(data.cpu.brand);
+		CPU.className = "click";
 
-      Disk.appendChild(sizeType);
-      Disk.appendChild(smartStatus);
-      Disk.appendChild(serial);
+		const Disks = document.createElement("li");
+		Disks.innerText = "Dysk" + (data.diskLayout.length === 1 ? ": " : "i: ");
+		data.diskLayout.map((diskData) => {
+			const Disk = document.createElement("ul");
+			const DiskText = document.createElement("li");
+			DiskText.innerText = "PN: " + diskData.serialNum;
+			DiskText.onclick = () => viewBarcode(diskData.serialNum);
+			DiskText.className = "click";
+			Disk.appendChild(DiskText);
 
-      Disks.appendChild(Disk);
-    });
+			const serial = document.createElement("ul");
+			serial.innerText = "Nazwa dysku: " + diskData.name;
+			serial.onclick = () => viewBarcode(diskData.name);
+			serial.className = "click";
+			const sizeType = document.createElement("ul");
+			sizeType.innerText = "Pojemność: " + Math.round(diskData.size / 1000000000) + " " + diskData.type;
+			sizeType.onclick = () => viewBarcode(Math.round(diskData.size / 1000000000) + " " + diskData.type);
+			sizeType.className = "click";
 
-    const RAM = document.createElement("li");
-    const RAMText = document.createElement("a");
-    RAMText.innerText = "RAM: " + formatBytes(data.mem.total);
-    RAMText.onclick = () => viewBarcode(formatBytes(data.mem.total));
-    RAMText.className = "click";
-    RAM.appendChild(RAMText);
+			const smartStatus = document.createElement("ul");
+			smartStatus.innerText = "SMART status: " + diskData.smartStatus;
 
-    data.memLayout.map((memSlotData) => {
-      const Serial = document.createElement("ul");
-      const SerialText = document.createElement("li");
+			Disk.appendChild(sizeType);
+			Disk.appendChild(smartStatus);
+			Disk.appendChild(serial);
 
-      if (memSlotData.type !== "Empty") {
-        SerialText.innerText = "PN: " + memSlotData.partNum;
-        SerialText.onclick = () => viewBarcode(memSlotData.partNum);
-        SerialText.className = "click";
-        Serial.appendChild(SerialText);
+			Disks.appendChild(Disk);
+		});
 
-        const SlotSize = document.createElement("ul");
-        SlotSize.innerText = "Rozmiar modułu: " + formatBytes(memSlotData.size);
+		const RAM = document.createElement("li");
+		const RAMText = document.createElement("a");
+		RAMText.innerText = "RAM: " + formatBytes(data.mem.total);
+		RAMText.onclick = () => viewBarcode(formatBytes(data.mem.total));
+		RAMText.className = "click";
+		RAM.appendChild(RAMText);
 
-        Serial.appendChild(SlotSize);
-      } else {
-        SerialText.innerText = "Pusty slot";
-        Serial.appendChild(SerialText);
-      }
-      RAM.appendChild(Serial);
-    });
+		data.memLayout.map((memSlotData) => {
+			const Serial = document.createElement("ul");
+			const SerialText = document.createElement("li");
 
-    const GPUs = document.createElement("li");
-    GPUs.innerText =
-      "Grafik" + (data.graphics.controllers.length === 1 ? "a" : "i") + ":";
-    const GPUUl = document.createElement("ul");
-    data.graphics.controllers.map((GPUData) => {
-      const GPU = document.createElement("li");
-      GPU.innerText = GPUData.model;
-      GPU.onclick = () => viewBarcode(GPUData.model);
-      GPU.className = "click";
-      GPUUl.appendChild(GPU);
-    });
-    GPUs.appendChild(GPUUl);
+			if (memSlotData.type !== "Empty") {
+				SerialText.innerText = "PN: " + memSlotData.partNum;
+				SerialText.onclick = () => viewBarcode(memSlotData.partNum);
+				SerialText.className = "click";
+				Serial.appendChild(SerialText);
 
-    const Displays = document.createElement("li");
-    Displays.innerText =
-      "Wyświetlacz" + (data.graphics.displays.length !== 1 ? "e" : "") + ":";
-    const DisplaysUl = document.createElement("ul");
-    data.graphics.displays.map((DisplayData) => {
-      const Display = document.createElement("li");
-      Display.innerText = `Złącze: ${DisplayData.connection}`;
+				const SlotSize = document.createElement("ul");
+				SlotSize.innerText = "Rozmiar modułu: " + formatBytes(memSlotData.size);
 
-      const resolution = document.createElement("ul");
-      resolution.innerText = `Rozdzielczość: ${DisplayData.currentResX}x${DisplayData.currentResY}`;
-      resolution.onclick = () =>
-        viewBarcode(DisplayData.currentResX + "x" + DisplayData.currentResY);
-      resolution.className = "click";
+				Serial.appendChild(SlotSize);
+			} else {
+				SerialText.innerText = "Pusty slot";
+				Serial.appendChild(SerialText);
+			}
+			RAM.appendChild(Serial);
+		});
 
-      Display.appendChild(resolution);
-      DisplaysUl.appendChild(Display);
-    });
-    Displays.appendChild(DisplaysUl);
+		const GPUs = document.createElement("li");
+		GPUs.innerText = "Grafik" + (data.graphics.controllers.length === 1 ? "a" : "i") + ":";
+		const GPUUl = document.createElement("ul");
+		data.graphics.controllers.map((GPUData) => {
+			const GPU = document.createElement("li");
+			GPU.innerText = GPUData.model;
+			GPU.onclick = () => viewBarcode(GPUData.model);
+			GPU.className = "click";
+			GPUUl.appendChild(GPU);
+		});
+		GPUs.appendChild(GPUUl);
 
-    const Battery = document.createElement("li");
-    Battery.innerText = "Bateria:";
+		const Displays = document.createElement("li");
+		Displays.innerText = "Wyświetlacz" + (data.graphics.displays.length !== 1 ? "e" : "") + ":";
+		const DisplaysUl = document.createElement("ul");
+		data.graphics.displays.map((DisplayData) => {
+			const Display = document.createElement("li");
+			Display.innerText = `Złącze: ${DisplayData.connection}`;
 
-    const Capacity = document.createElement("li");
-    Capacity.innerText = `Żywotność: ${data.battery.capacity.perc} (${data.battery.capacity.text})`;
+			const resolution = document.createElement("ul");
+			resolution.innerText = `Rozdzielczość: ${DisplayData.currentResX}x${DisplayData.currentResY}`;
+			resolution.onclick = () => viewBarcode(DisplayData.currentResX + "x" + DisplayData.currentResY);
+			resolution.className = "click";
 
-    const Energy = document.createElement("li");
-    Energy.innerText = `Poziom naładowania: ${data.battery.energy.perc} (${data.battery.energy.wh})`;
+			Display.appendChild(resolution);
+			DisplaysUl.appendChild(Display);
+		});
+		Displays.appendChild(DisplaysUl);
 
-    const Voltage = document.createElement("li");
-    Voltage.innerText = `Napięcie: ${data.battery.voltage} ${data.battery.state}`;
+		const Battery = document.createElement("li");
+		Battery.innerText = "Bateri" + (data.battery.length === 1 ? "a" : "e") + ":";
+		const BatteriesUl = document.createElement("ul");
 
-    const BatteryUl = document.createElement("ul");
-    BatteryUl.appendChild(Capacity);
-    BatteryUl.appendChild(Energy);
-    BatteryUl.appendChild(Voltage);
+		data.battery.map((BatteryData) => {
+			const Capacity = document.createElement("li");
+			Capacity.innerText = `Żywotność: ${BatteryData.capacity.perc} (${BatteryData.capacity.text})`;
 
-    Battery.appendChild(BatteryUl);
+			const Energy = document.createElement("li");
+			Energy.innerText = `Poziom naładowania: ${BatteryData.energy.perc} (${BatteryData.energy.wh})`;
 
-    if (element) {
-      element.innerHTML = "";
-      element.appendChild(Serial);
-      element.appendChild(Model);
-      element.appendChild(CPU);
-      element.appendChild(Disks);
-      element.appendChild(RAM);
-      element.appendChild(GPUs);
-      element.appendChild(Displays);
-      element.appendChild(Battery);
+			const Voltage = document.createElement("li");
+			Voltage.innerText = `Napięcie: ${BatteryData.voltage} ${BatteryData.state}`;
 
-      JsBarcode(SerialBarCode, data.system.serial);
+			const BatteryUl = document.createElement("ul");
+			BatteryUl.appendChild(Energy);
+			BatteryUl.appendChild(Voltage);
+			Capacity.appendChild(BatteryUl);
+			BatteriesUl.appendChild(Capacity);
+		});
 
-      window.setInterval(() => {
-        getBatteryStats((newBatResp) => {
-          changeIfNewValue(
-            Capacity,
-            `Żywotność: ${newBatResp.capacity.perc} (${newBatResp.capacity.text})`
-          );
-          changeIfNewValue(
-            Energy,
-            `Poziom naładowania: ${newBatResp.energy.perc} (${newBatResp.energy.wh})`
-          );
-          changeIfNewValue(
-            Voltage,
-            `Napięcie: ${newBatResp.voltage} ${newBatResp.state}`
-          );
-        });
-      }, 100);
-    }
-  };
+		Battery.appendChild(BatteriesUl);
+
+		if (element) {
+			element.innerHTML = "";
+			element.appendChild(Serial);
+			element.appendChild(Model);
+			element.appendChild(CPU);
+			element.appendChild(Disks);
+			element.appendChild(RAM);
+			element.appendChild(GPUs);
+			element.appendChild(Displays);
+			element.appendChild(Battery);
+
+			JsBarcode(SerialBarCode, data.system.serial);
+
+			window.setInterval(() => {
+				getBatteryStats((newBatResp) => {
+					changeIfNewValue(Capacity, `Żywotność: ${newBatResp.capacity.perc} (${newBatResp.capacity.text})`);
+					changeIfNewValue(Energy, `Poziom naładowania: ${newBatResp.energy.perc} (${newBatResp.energy.wh})`);
+					changeIfNewValue(Voltage, `Napięcie: ${newBatResp.voltage} ${newBatResp.state}`);
+				});
+			}, 100);
+		}
+	};
 });

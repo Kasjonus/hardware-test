@@ -44,11 +44,12 @@ window.addEventListener("DOMContentLoaded", () => {
 				.replace(/ +/g, "")
 				.split("\n")
 				.map((item) => {
-					array.push(item);
+					item.length > 0 && array.push(item);
 				});
 
 			if (error !== null) {
 				console.log("exec error: " + error);
+				cb([]);
 			} else {
 				cb(array);
 			}
@@ -245,31 +246,13 @@ window.addEventListener("DOMContentLoaded", () => {
 		Displays.appendChild(DisplaysUl);
 
 		const Battery = document.createElement("li");
-		Battery.innerText = "Bateri" + (data.battery.length === 1 ? "a" : "e") + ":";
+		const BatteryTitle = document.createElement("a");
+		BatteryTitle.className = "BatteryTitle";
+		BatteryTitle.innerText = "Trwa wykrywanie baterii..";
 		const BatteriesUl = document.createElement("ul");
+		BatteriesUl.className = "BatteriesUl";
 
-		data.battery.map((BatteryData) => {
-			const Capacity = document.createElement("li");
-			Capacity.id = BatteryData.id;
-			const CapacityText = document.createElement("a");
-			CapacityText.innerText = `Żywotność: ${BatteryData.capacity.perc} (${BatteryData.capacity.text})`;
-			Capacity.appendChild(CapacityText);
-
-			const Energy = document.createElement("li");
-			Energy.className = "energy";
-			Energy.innerText = `Poziom naładowania: ${BatteryData.energy.perc} (${BatteryData.energy.wh})`;
-
-			const Voltage = document.createElement("li");
-			Voltage.className = "voltage";
-			Voltage.innerText = `Napięcie: ${BatteryData.voltage} ${BatteryData.state}`;
-
-			const BatteryUl = document.createElement("ul");
-			BatteryUl.appendChild(Energy);
-			BatteryUl.appendChild(Voltage);
-			Capacity.appendChild(BatteryUl);
-			BatteriesUl.appendChild(Capacity);
-		});
-
+		Battery.appendChild(BatteryTitle);
 		Battery.appendChild(BatteriesUl);
 
 		if (element) {
@@ -287,10 +270,30 @@ window.addEventListener("DOMContentLoaded", () => {
 
 			window.setInterval(() => {
 				getBatteries((batResp) => {
+					document.querySelector(".BatteryTitle").innerText = batResp.length === 0 ? "Nie wykryto baterii" : ("Bateri" + (batResp.length === 1 ? "a" : "e") + ":");
 					batResp.forEach((batPathResp) => {
 						batPathResp.length !== 0 &&
 							getBatteryStats(batPathResp, (newBatResp) => {
-								console.log(newBatResp);
+
+								if(document.getElementById(newBatResp.id) === null) {
+									const Capacity = document.createElement("li");
+									Capacity.id = newBatResp.id;
+									const CapacityText = document.createElement("a");
+									Capacity.appendChild(CapacityText);
+						
+									const Energy = document.createElement("li");
+									Energy.className = "energy";
+						
+									const Voltage = document.createElement("li");
+									Voltage.className = "voltage";
+						
+									const BatteryUl = document.createElement("ul");
+									BatteryUl.appendChild(Energy);
+									BatteryUl.appendChild(Voltage);
+									Capacity.appendChild(BatteryUl);
+									document.querySelector(".BatteriesUl").appendChild(Capacity);
+								}
+								
 								changeIfNewValue(
 									document.getElementById(newBatResp.id).querySelector("a"),
 									`Żywotność: ${newBatResp.capacity.perc} (${newBatResp.capacity.text})`
@@ -305,6 +308,15 @@ window.addEventListener("DOMContentLoaded", () => {
 								);
 							});
 					});
+
+					const currentBatteryStats = document.querySelector(".BatteriesUl").children;
+
+					for (let i = 0; i < currentBatteryStats.length; i++) {
+						if(batResp.filter(newBatStats => currentBatteryStats[i].id === newBatStats).length === 0) {
+							currentBatteryStats[i].remove();
+						}
+					}
+					
 				});
 			}, 100);
 		}

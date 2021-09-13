@@ -6,19 +6,20 @@ Software for hardware testing.
 - linux
   - upower (for batteries detect)
   - lshw (for graphics detect)
+  - smartmontools (for S.M.A.R.T. status)
 
 ## Commands:
 - ### install packages
-        npm install
+        yarn | npm install
 
 - ### start app
     - #### for normal user:
-            npm start
-    - #### for root user:
-            npm run startRoot
+            yarn start | npm start
+    - #### for root user (recommended):
+            yarn startRoot | npm run startRoot
 
 - ### build app
     - #### linux
-            npm run build-lin
+            yarn build-lin | npm run build-lin
     - #### windows (not working propertly)
-            npm run build-win
+            yarn build-win | npm run build-win
